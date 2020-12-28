@@ -1,6 +1,6 @@
 //
 // SortingAlgorithm.h
-// Created by Dimka Novikov on 28.12.2020.
+// Created by Dimka Novikov on 24.10.2020.
 
 #ifndef _SortingAlgorithm_hpp_
 #define _SortingAlgorithm_hpp_
