@@ -26,7 +26,7 @@ class List final {
 		// индекс
 		int index;
 		// список
-		List<ElementType> *list;
+		List<ElementType> &list;
 		
 	public:
 		// конструктор
@@ -51,27 +51,21 @@ class List final {
 	};
 	
 	
-	// MARK: - Итератор
-	// механизм копирования
-	const Iterator iterator() const {
-		Iterator iterator(*this);
-		return iterator;
-	}
-	Iterator iterator() {
-		Iterator iterator(*this);
-		return iterator;
-	}
-	
-	
 private:
 	
 	// струткура узла
-//	template<typename ElementType>
-//	template<class ElementType>
-	struct Node {
+	class Node final {
+	public:
 		ElementType value;
-		ElementType *pNext;
-		ElementType *pPrevious;
+		Node *pPrevious;
+		Node *pNext;
+		
+	public:
+		Node(ElementType value = ElementType(), Node *pPrevious = nullptr, Node *pNext = nullptr) {
+			this -> value = value;
+			this -> pPrevious = pPrevious;
+			this -> pNext = pNext;
+		}
 	};
 	
 	// Голова
@@ -108,6 +102,17 @@ public:
 	// Количество узлов
 	int size() const;
 	
+	// MARK: - Итератор
+	// механизм копирования
+	const Iterator iterator() const {
+		Iterator iterator(*this);
+		return iterator;
+	}
+	Iterator iterator() {
+		Iterator iterator(*this);
+		return iterator;
+	}
+	
 };
 
 
@@ -142,40 +147,34 @@ List<ElementType>::List(const List &list) {
 template<typename ElementType>
 List<ElementType>::~List() {
 	
+	while (this -> count > 0)
+		this -> removeTail();
+	
 }
 
 // вставка головы
 template<typename ElementType>
 void List<ElementType>::insertHead(const ElementType &value) {
 	
-	// Новый жлемент
-	Node *temporaryNode = new Node;
+	// Новый элемент
+	Node *temporaryNode = new Node();
 	
-	// Предыдущего нет
-	temporaryNode -> pPrevious = nullptr;
 	// Заполняем данные
 	temporaryNode -> value = value;
+	// Предыдущего нет
+	temporaryNode -> pPrevious = nullptr;
 	// Следующий - бывшая голова
 	temporaryNode -> pNext = this -> headNode;
-//	temp->next = Head;
 	
 	// Если элементы есть?
 	if (this -> headNode != nullptr)
-		headNode -> pPrevious = temporaryNode;
-	
-//	if(Head != 0)
-//		Head->prev = temp;
+		this -> headNode -> pPrevious = temporaryNode;
 	
 	// Если элемент первый, то он одновременно и голова и хвост
 	if (this -> count == 0)
-		headNode = tailNode = temporaryNode;
+		this -> headNode = this -> tailNode = temporaryNode;
 	else
-		headNode = temporaryNode; // иначе новый элемент - головной
-//	if(Count == 0)
-//		Head = Tail = temp;
-//	else
-		
-//	Head = temp;
+		this -> headNode = temporaryNode; // иначе новый элемент - головной
 	
 	this -> count++;
 	
@@ -184,6 +183,87 @@ void List<ElementType>::insertHead(const ElementType &value) {
 // вставка хвоста
 template<typename ElementType>
 void List<ElementType>::insertTail(const ElementType &value) {
+	
+	// создание новго узла
+	Node *temporaryNode = new Node();
+	
+	// запись значения
+	temporaryNode -> value = value;
+	// пред = хвосту
+	temporaryNode -> pPrevious = this -> tailNode;
+	// следующего нет
+	temporaryNode -> pNext = nullptr;
+	
+	// Если элементы есть?
+	if (this -> tailNode != nullptr)
+		this -> tailNode -> pNext = temporaryNode;
+	
+	// Если элемент первый, то он одновременно и голова и хвост
+	if(this -> count == 0)
+		this -> headNode = this -> tailNode = temporaryNode;
+	else
+		this -> tailNode = temporaryNode; // иначе новый элемент - хвостовой
+	
+	this -> count++;
+	
+}
+
+
+// удаление головного элемента
+template<typename ElementType>
+void List<ElementType>::removeHead() {
+	
+	if (this -> count == 0)
+		throw std::range_error("list is empty");
+	else if (this -> count == 1)
+		this -> headNode = this -> tailNode = nullptr;
+	else if (this -> count == 2) {
+		this -> headNode = this -> tailNode;
+	} else {
+		
+		Node *temporaryNode = new Node();
+		
+		// след нод за хедом - является хедом
+		temporaryNode -> value = this -> headNode -> pNext -> value;
+		temporaryNode -> pPrevious = nullptr;
+		temporaryNode -> pNext = this -> headNode -> pNext;
+		
+		delete this -> headNode;
+		
+		this -> headNode = temporaryNode;
+		
+	}
+	
+	this -> count--;
+	
+}
+
+// удаление хвостового элемента
+template<typename ElementType>
+void List<ElementType>::removeTail() {
+	
+	if (this -> count == 0)
+		throw std::range_error("list is empty");
+	else if (this -> count == 1)
+		this -> headNode = this -> tailNode = nullptr;
+	else if (this -> count == 2) {
+		this -> headNode = this -> tailNode;
+	} else {
+		
+		Node *temporaryNode = new Node();
+		
+		// след нод за хедом - является хедом
+		temporaryNode -> value = this -> tailNode -> pPrevious -> value;
+		temporaryNode -> pPrevious = this -> tailNode -> pPrevious;
+		temporaryNode -> pNext = nullptr;
+		
+		delete this -> tailNode;
+		
+		this -> tailNode = temporaryNode;
+		
+	}
+	
+	this -> count--;
 	
 }
 
@@ -197,7 +277,7 @@ const ElementType &List<ElementType>::head() const {
 // хвостовой элемент
 template<typename ElementType>
 const ElementType &List<ElementType>::tail() const {
-	return this -> tailNode -> value;
+	return (this -> tailNode) -> value;
 }
 
 // количество узлов
@@ -208,152 +288,157 @@ int List<ElementType>::size() const {
 
 
 
+// Итератор
+template<typename ElementType>
+List<ElementType>::Iterator::Iterator(List<ElementType> &list) : list(list) {
+	this -> index = 0;
+}
 
+// текущий элемент
+template<typename ElementType>
+const ElementType &List<ElementType>::Iterator::get() const {
+	
+	Node *temporaryNode = new Node();
+	temporaryNode = this -> list.headNode;
+	
+	int currentIndex = 0;
+	
+	while (currentIndex < this -> index) {
+		temporaryNode = temporaryNode -> pNext;
+		currentIndex++;
+	}
+	
+	return temporaryNode -> value;
+		
+}
 
+// устновить значение
+template<typename ElementType>
+void List<ElementType>::Iterator::set(const ElementType &value) {
+	
+	Node *temporaryNode = new Node();
+	temporaryNode = this -> list.headNode;
+	
+	int currentIndex = 0;
+	
+	while (currentIndex < this -> index) {
+		temporaryNode = temporaryNode -> pNext;
+		currentIndex++;
+	}
+	
+	temporaryNode -> value = value;
+	
+}
 
+// добавление элемента в текущей позиции
+template<typename ElementType>
+void List<ElementType>::Iterator::insert(const ElementType &value) {
+	
+	if ((this -> list.count == 0) || (this -> list.count == 1))
+		list.insertTail(value);
+	else {
+		
+		Node *temporaryNode = new Node(value);
+		
+		Node *leftNode = new Node();
+		leftNode = this -> list.headNode;
+		
+		Node *rightNode = new Node();
+		
+		int currentIndex = 0;
+		
+		while (currentIndex < this -> index - 1) {
+			leftNode = leftNode -> pNext;
+			currentIndex++;
+		}
+		
+		this -> index = currentIndex + 1;
+		
+		rightNode = leftNode -> pNext -> pNext;
+		
+		leftNode -> pNext = temporaryNode;
+		temporaryNode -> pPrevious = leftNode;
+		
+		temporaryNode -> pNext = rightNode;
+		rightNode -> pPrevious = temporaryNode;
+		
+		this -> list.count++;
+	
+	}
+	
+}
 
+// удаление по индексу
+template<typename ElementType>
+void List<ElementType>::Iterator::remove() {
+	
+	if (this -> list.count == 0)
+		throw std::range_error("list is empty");
+	else if (this -> list.count == 1) {
+		this -> list.headNode = this -> list.tailNode = nullptr;
+		this -> index = 0;
+		this -> list.count--;
+	} else if ((this -> list.count >= 2) && (this -> hasPrevious())) {
+		this -> list.removeTail();
+		this -> index = this -> list.count - 1;
+	} else if ((this -> list.count >= 2) && (this -> hasNext()))
+		this -> list.removeHead();
+	else if ((this -> list.count > 2) && this -> hasNext() && this -> hasPrevious()) {
+		
+		Node *leftNode = new Node();
+		leftNode = this -> list.headNode;
+		
+		Node *temporaryNode = new Node();
+		
+		Node *rightNode = new Node();
+		
+		int currentIndex = 0;
+		
+		while (currentIndex < this -> index - 1) {
+			leftNode = leftNode -> pNext;
+			currentIndex++;
+		}
+		
+		rightNode = leftNode -> pNext -> pNext;
+		
+		temporaryNode = leftNode -> pNext;
+		delete temporaryNode;
+		
+		leftNode -> pNext = rightNode;
+		
+		rightNode -> pPrevious = leftNode;
+		
+		this -> list.count--;
+		
+		this -> index++;
+		
+	}
+	
+}
 
+// след элемент
+template<typename ElementType>
+void List<ElementType>::Iterator::next() {
+	this -> index++;
+}
 
-//template<typename ElementType>
-//class List final {
-//	
-//private:
-//	// узел
-//	class Node final {
-//	private:
-//		Node *pNext;
-//		Node *pPrevious;
-//		ElementType value;
-//		
-//	public:
-//		Node(ElementType value = ElementType(), Node *pNext = nullptr, Node *pPrevious = nullptr) {
-//			this -> value = value;
-//			this -> pNext = pNext;
-//			this -> pPrevious = pPrevious;
-//		}
-//		~Node() {
-//			
-//		}
-//	};
-//	
-//	// head
-//	Node *headNode;
-//	// tail
-//	Node *tailNode;
-//	// количество узлов
-//	int count;
-//	
-//	
-//public:
-//	
-//	// конструктор
-//	List();
-//	// деструктор
-//	~List();
-//	
-//	// добавить узел в начало
-//	void insertHead(const ElementType &value);
-//	// добавить узел в конец
-//	void insertTail(const ElementType &value);
-//	// удалить первый узел
-//	void removeHead();
-//	// удалить последний узел
-//	void removeTail();
-//	// получить первый узел
-//	const ElementType & head() const;
-//	// получить последний узел
-//	const ElementType & tail() const;
-//	// получить количество узлов
-//	int size() const;
-//	
-//	
-//	
-//};
-//
-//
-//// конструктор
-//template<typename ElementType>
-//List<ElementType>::List() {
-//	this -> headNode = nullptr;
-//	this -> tailNode = nullptr;
-//	this -> count = 0;
-//}
-//
-//// деструктор
-//template<typename ElementType>
-//List<ElementType>::~List() {
-//	
-//}
-//
-//
-//// добавить узел в начало
-//template<typename ElementType>
-//void List<ElementType>::insertHead(const ElementType &value) {
-//	
-//	if (this -> count == 0)
-//		this -> headNode = new Node(value);
-//	else {
-//		
-//	}
-//	
-//	this -> count++;
-//	
-//}
-//
-//// добавить узел в конец
-//template<typename ElementType>
-//void List<ElementType>::insertTail(const ElementType &value) {
-//	
-//	if (this -> count == 0)
-//		
-//		this -> headNode = new Node(value);
-//	
-//	else {
-//		
-//		Node *currentNode = this -> headNode;
-//		
-//		while (currentNode -> pNext != nullptr) 
-//			currentNode = currentNode -> pNext;
-//		
-//		currentNode -> pNext = new Node(value);
-////		currentNode -> pPrevious = this -> headNode
-//		
-//	}
-//	
-//	this -> count++;
-//	
-//}
-//
-//// удалить первый узел
-//template<typename ElementType>
-//void List<ElementType>::removeHead() {
-//	if (this -> count == 0)
-//		delete this -> headNode;
-//}
-//
-//// удалить последний узел
-//template<typename ElementType>
-//void List<ElementType>::removeTail() {
-//	
-//}
-//
-//// получить первый узел
-//template<typename ElementType>
-//const ElementType & List<ElementType>::head() const {
-//	
-//}
-//
-//// получить последний узел
-//template<typename ElementType>
-//const ElementType & List<ElementType>::tail() const {
-//	
-//}
-//
-//// количество элементов в списке
-//template<typename ElementType>
-//int List<ElementType>::size() const {
-//	return this -> count;
-//}
+// пред элемент
+template<typename ElementType>
+void List<ElementType>::Iterator::previous() {
+	this -> index--;
+}
+
+// есть ли след
+template<typename ElementType>
+bool List<ElementType>::Iterator::hasNext() const {
+	return (this -> index < this -> list.count);
+}
+
+// есть ли пред
+template<typename ElementType>
+bool List<ElementType>::Iterator::hasPrevious() const {
+	return (this -> index > 0);
+}
 
 
 

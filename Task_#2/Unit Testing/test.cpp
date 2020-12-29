@@ -1,9 +1,72 @@
 #include "gtest/gtest.h"
 #include "../Array/Array.hpp"
+#include "../List/List.hpp"
+#include "../Wizard/Wizard.cpp"
 
 #include <iostream>
+#include <string>
 
 
+// Array
+
+TEST(ArrayCustomTest, CustomClassTest) {
+		
+	Array<Wizard> *array = new Array<Wizard>();
+	
+	EXPECT_TRUE(array -> size() == 0);
+	EXPECT_TRUE(array -> capacity() == 8);
+	
+	auto it = array -> iterator();
+	
+//	for (auto temp = it; temp.hasNext(); temp.next())
+	for (int i = 0; i < 50; i++)
+		it.insert(Wizard());
+	
+//	it.insert(Wizard());
+	
+	
+//	auto it = array -> iterator();
+//	
+//	 it.insert(Wizard("Mag 1", 10));
+	
+//	auto it = array -> iterator();
+	
+//	it.insert(Wizard("Wizard", 10));
+	
+	
+//	EXPECT_TRUE(array.size() == 0);
+	
+//	array.insert(Wizard());
+	
+	
+//	auto it = array -> iterator();
+//	
+//	for (auto temp = it; temp.hasNext(); temp.next())
+//		std::cout << temp.get().name << "\t" << std::endl;
+//	std::cout << std::endl;
+//	
+//	EXPECT_TRUE(it.get().mana == 1);
+//	
+//	array -> insert(Wizard("Wizard -1", 31), 0);
+//	
+//	EXPECT_TRUE(it.get().mana == 31);
+//	
+//	it.next();
+//	
+//	EXPECT_TRUE(it.get().mana == 0);
+//	
+//	it.remove();
+//	
+//	EXPECT_TRUE((array -> size()) == 50);
+	
+//	Array<Wizard> wizards(21);
+//	
+//	wizards.insert(Wizard("Hello", 123));
+//	
+//	EXPECT_TRUE(wizards.size() == 1);
+//	EXPECT_TRUE(wizards.capacity() == 21);
+	
+}
 
 TEST(ArrayTests, initTest) {
 	Array<int> array;
@@ -119,6 +182,168 @@ TEST(ArrayTests, iteratorToIndexTest) {
 	auto it = array.iterator();
 	it.toIndex(2);
 	EXPECT_TRUE(it.get() == 2);
+}
+
+
+
+// Double Linked List
+
+TEST(ListTests, initTest) {
+	List<int> list;
+	EXPECT_TRUE(list.size() == 0);
+}
+
+TEST(ListTests, insertHeadNTail) {
+	List<int> list;
+	list.insertHead(10);
+	EXPECT_TRUE(list.head() == 10);
+	list.insertHead(12);
+	EXPECT_TRUE(list.head() == 12);
+	list.insertTail(15);
+	EXPECT_TRUE(list.tail() == 15);
+	list.insertTail(1);
+	EXPECT_TRUE(list.tail() == 1);
+	EXPECT_FALSE(list.head() == 1);
+}
+
+TEST(ListTests, removeHeadNTail) {
+	List<int> list;
+	list.insertHead(10);
+	list.insertHead(12);
+	list.insertTail(15);
+	list.insertTail(1);
+	list.removeHead();
+	EXPECT_TRUE(list.head() != 12);
+	list.removeTail();
+	EXPECT_TRUE(list.tail() != 1);
+	list.removeTail();
+	EXPECT_TRUE(list.head() == list.tail());
+}
+
+TEST(ListTests, test) {
+	List<int> list;
+	
+	for (int i = 0; i < 10; i++)
+		list.insertTail(i);
+	int temporaryValue = 0;
+	for (auto it = list.iterator(); it.hasNext(); it.next()) {
+		EXPECT_TRUE(it.get() == temporaryValue);
+		temporaryValue++;
+	}
+	
+	List<int> list2;
+	for (int i = 0; i < 10; i++)
+		list2.insertHead(i);
+	temporaryValue = 9;
+	for (auto it = list2.iterator(); it.hasNext(); it.next()) {
+		EXPECT_TRUE(it.get() == temporaryValue);
+		temporaryValue--;
+	}
+}
+
+TEST(ListTests, iteratorInitTest) {
+	List<int> list;
+	list.insertHead(10);
+	list.insertHead(12);
+	list.insertTail(15);
+	list.insertTail(1);
+	
+	auto it = list.iterator();
+	EXPECT_TRUE(it.get() == 12);
+	EXPECT_FALSE(it.hasPrevious());
+	it.next();
+	EXPECT_TRUE(it.get() == 10);
+	EXPECT_TRUE(it.hasNext());
+}
+
+TEST(ListTests, iteratorForwardMoveTest) {
+	List<int> list;
+	list.insertHead(10);
+	list.insertHead(12);
+	list.insertTail(15);
+	list.insertTail(1);
+	auto it = list.iterator();
+	it.next();
+	EXPECT_TRUE(it.get() == 10);
+	it.next();
+	EXPECT_TRUE(it.get() == 15);
+	EXPECT_TRUE(it.hasPrevious());
+	EXPECT_TRUE(it.hasNext());
+	it.next();
+	EXPECT_TRUE(it.get() == 1);
+}
+
+TEST(ListTests, iteratorBackMoveTest) {
+	List<int> list;
+	list.insertHead(10);
+	list.insertHead(12);
+	list.insertTail(15);
+	list.insertTail(1);
+	auto it = list.iterator();
+	it.next();
+	it.next();
+	it.next();
+	EXPECT_TRUE(it.get() == 1);
+	it.previous();
+	EXPECT_TRUE(it.get() == 15);
+	EXPECT_TRUE(it.hasNext());
+	EXPECT_TRUE(it.hasPrevious());
+	it.previous();
+	EXPECT_TRUE(it.get() == 10);
+}
+
+TEST(ListTests, iteratorSetTest) {
+	List<int> list;
+	list.insertHead(10);
+	list.insertHead(12);
+	list.insertTail(15);
+	list.insertTail(1);
+	auto it = list.iterator();
+	it.next();
+	it.next();
+	it.set(255);
+	EXPECT_TRUE(it.get() == 255);
+	EXPECT_TRUE(list.size() == 4);
+}
+
+TEST(ListTests, iteratorInsertTest) {
+	List<int> list;
+	
+	auto it = list.iterator();
+	EXPECT_TRUE(list.size() == 0);
+	it.insert(5);
+	EXPECT_TRUE(list.head() == list.tail());
+	EXPECT_TRUE(list.head() == 5);
+	EXPECT_TRUE(list.size() == 1);
+	EXPECT_TRUE(it.get() == 5);
+	it.insert(10);
+	EXPECT_TRUE(list.size() == 2);
+	list.insertHead(21);
+	EXPECT_TRUE(list.size() == 3);
+}
+
+TEST(ListTests, iteratorRemoveTest) {
+	List<int> list;
+	
+	auto it = list.iterator();
+	
+	EXPECT_TRUE(list.size() == 0);
+	it.insert(5);
+	EXPECT_TRUE(list.head() == list.tail());
+	EXPECT_TRUE(list.head() == 5);
+	it.insert(10);
+	EXPECT_TRUE(list.size() == 2);
+	list.insertHead(21);
+	list.insertTail(157);
+	
+	EXPECT_TRUE(list.size() == 4);
+	
+	it.remove();
+	it.remove();
+	
+	EXPECT_TRUE(list.size() == 2);
+	EXPECT_TRUE(it.get() == 5);
+	
 }
 
 

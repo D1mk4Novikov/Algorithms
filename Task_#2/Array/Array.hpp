@@ -11,6 +11,8 @@
 //#include "./Array.cpp"
 
 #include <iostream>
+#include <cstdlib>
+//#include "malloc.h"
 
 // АТД Динамический массив
 template<typename ElementType>
@@ -100,7 +102,10 @@ public:
 // Дефолтный конструктор с дефолтным размером в 8 позиций для элементов
 template<typename ElementType>
 Array<ElementType>::Array() {
-	this -> array = new ElementType[8];
+//	this -> array = new ElementType[8];
+	this -> array = (ElementType *)std::malloc(8 * sizeof(ElementType));
+//	this -> array = new ElementType[50];
+//	this -> array = (ElementType *)malloc(8 * sizeof(ElementType));
 	this -> count = 0;
 	this -> currentSize = 8;
 }
@@ -108,7 +113,8 @@ Array<ElementType>::Array() {
 // кастомный конструтор
 template <typename ElementType>
 Array<ElementType>::Array(int capacity) {
-	this -> array = new ElementType[capacity];
+//	this -> array = new ElementType[capacity];
+	this -> array = (ElementType *)std::malloc(capacity * sizeof(ElementType));
 	this -> count = 0;
 	this -> currentSize = capacity;
 }
@@ -127,7 +133,8 @@ void Array<ElementType>::increaseSize() {
 	ElementType *temporaryValue = NULL;
 	
 	if (this -> count == this -> currentSize) {
-		temporaryValue = new ElementType[this -> currentSize * 2];
+//		temporaryValue = new ElementType[this -> currentSize * 2];
+		temporaryValue = (ElementType *)std::malloc(this -> currentSize * 2 * sizeof(ElementType));
 		std::move(this -> array, this -> array + this -> count, temporaryValue);
 	}
 	
@@ -174,7 +181,7 @@ void Array<ElementType>::remove(int index) {
 	
 	if (this -> count > 0) {
 		std::copy(this -> array + index + 1, this -> array + this -> count, this -> array + index);
-		this -> array[this -> count - 1] = 0;
+//		this -> array[this -> count - 1] = 0;
 		this -> count--;
 	}
 	
@@ -257,12 +264,12 @@ void Array<ElementType>::Iterator::toIndex(int index) {
 
 template<typename ElementType>
 bool Array<ElementType>::Iterator::hasNext() const {
-	return this -> index < this -> array.count - 1;
+	return this -> index < (this -> array.count - 1);
 }
 
 template<typename ElementType>
 bool Array<ElementType>::Iterator::hasPrevious() const {
-	return this -> index > 1;
+	return this -> index > 0;
 }
 
 
